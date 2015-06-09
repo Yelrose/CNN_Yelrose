@@ -206,8 +206,8 @@ class Layer {
 
 
 
-        vector<Blob<Dtype >* > blobs_;
     private:
+        vector<Blob<Dtype >* > blobs_;
         int conv_height;
         int conv_width;
         int conv_stride;
