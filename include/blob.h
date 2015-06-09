@@ -32,8 +32,7 @@ class Blob {
         ~Blob() {
             if(count_ > 0) {
                 delete [] data_;
-                delete [] diff_;
-            }
+                delete [] diff_; }
         }
         void random() {
             for(int i = 0;i < count_;i ++) {
@@ -72,6 +71,9 @@ class Blob {
         void set_zero() {
             memset(data_,0,sizeof(data_));
             memset(diff_,0,sizeof(diff_));
+        }
+        int size() {
+            return count_;
         }
     private:
         Dtype * data_;

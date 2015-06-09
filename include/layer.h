@@ -17,16 +17,21 @@ class Layer {
             conv_stride = stride;
             conv_feature = feature_map;
             blobs_ = vector<Blob<Dtype> *> (conv_feature);
+
             for(int i = 0;i < blobs_.size();i ++) {
+
                 blobs_[i] = new Blob<Dtype > (1,height,width);
                 blobs_[i] -> random();
-
             }
         }
         void convolution_forward(const vector<Blob<Dtype> *>&bottom,const vector<Blob<Dtype>* > &top) {
+
             for(int i = 0;i < top.size();i ++){
-                top[i] -> set_zero(); } for(int i = 0;i < blobs_.size();i ++) {
+                top[i] -> set_zero();
+            }
+            for(int i = 0;i < blobs_.size();i ++) {
                 const Dtype * weight_ =  blobs_[i] -> data();
+
                 for(int j = 0;j < bottom.size();j ++) {
                     const Dtype * bottom_ = bottom[j] -> data();
                     Dtype * top_ = top[i] -> mutable_data();
@@ -39,13 +44,15 @@ class Layer {
             int top_shift2 = top_shape[2];
             int bottom_shift1 = bottom_shape[1] * bottom_shape[2];
             int bottom_shift2 = bottom_shape[2];
+
             for(int num = 0; num < top_shape[0];num ++) {
                 for(int i = 0;i < bottom_shape[1] - conv_height + conv_stride;i += conv_stride) {
                     for(int j = 0;j < bottom_shape[2] - conv_width + conv_stride;j += conv_stride) {
+                        int ii = i / conv_stride;
+                        int jj = j / conv_stride;
                         for(int h = 0; h < conv_height;h ++) {
                             for(int w = 0;w < conv_width;w ++) {
-                                int ii = i / conv_stride;
-                                int jj = i / conv_stride;
+
                                 top[num*top_shift1 + ii*top_shift2 +jj] +=
                                     bottom[num* bottom_shift1 + (i+h)* bottom_shift2 + j+w]
                                     * weight[h * conv_width + w];
@@ -135,17 +142,20 @@ class Layer {
                 int bottom_shift1 = bottom_shape[1] * bottom_shape[2];
                 int bottom_shift2 = bottom_shape[2];
                 for(int num = 0;num < top_shape[0];num ++) {
-                    for(int bh = 0;bh < bottom_shape[1] - pool_height;bh += pool_stride) {
-                        for(int bw = 0;bw < bottom_shape[2] - pool_width;bw += pool_stride) {
+                    for(int bh = 0;bh < bottom_shape[1] - pool_height+pool_stride;bh += pool_stride) {
+                        for(int bw = 0;bw < bottom_shape[2] - pool_width+pool_stride;bw += pool_stride) {
                             bool first = false;
                             int th =  bh / pool_stride;
                             int tw = bw / pool_stride;
                             for(int h = 0;h < pool_height;h ++) {
                                 for(int w = 0;w < pool_width;w ++) {
-                                    if(first ++) top_[num * top_shift1 + th * top_shift2 + tw] = bottom_[num* bottom_shift1 + bh * bottom_shift2 + bw];
+                                    if(first ){
+                                        top_[num * top_shift1 + th * top_shift2 + tw] = bottom_[num* bottom_shift1 + (bh+h) * bottom_shift2 + (bw+w)];
+                                        first = false;
+                                    }
                                     top_[num * top_shift1 + th * top_shift2 + tw] = max(
                                             top_[num * top_shift1 + th * top_shift2 + tw] ,
-                                            bottom_[num* bottom_shift1 +  bh * bottom_shift2 + bw]
+                                            bottom_[num* bottom_shift1 +  (bh +h) * bottom_shift2 + (bw+w)]
                                     );
                                 }
                             }
@@ -169,8 +179,8 @@ class Layer {
                 int bottom_shift1 = bottom_shape[1] * bottom_shape[2];
                 int bottom_shift2 = bottom_shape[2];
                 for(int num = 0;num < top_shape[0];num ++) {
-                    for(int bh = 0;bh < bottom_shape[1] - pool_height;bh += pool_stride) {
-                        for(int bw = 0;bw < bottom_shape[2] - pool_width;bw += pool_stride) {
+                    for(int bh = 0;bh < bottom_shape[1] - pool_height+ pool_stride;bh += pool_stride) {
+                        for(int bw = 0;bw < bottom_shape[2] - pool_width+pool_stride;bw += pool_stride) {
                             bool first = false;
                             int th =  bh / pool_stride;
                             int tw = bw / pool_stride;
@@ -196,8 +206,8 @@ class Layer {
 
 
 
-    private:
         vector<Blob<Dtype >* > blobs_;
+    private:
         int conv_height;
         int conv_width;
         int conv_stride;
