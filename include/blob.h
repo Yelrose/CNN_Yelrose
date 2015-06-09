@@ -1,6 +1,7 @@
 #ifndef BLOB_H
 #define BLOB_H
 #include <vector>
+#include <cstring>
 #include <iostream>
 #include "debug.h"
 using namespace std;
@@ -11,12 +12,11 @@ class Blob {
         Blob():data_(),diff_(),count_(0){
 
         }
-        Blob(const int num, const int channels,const int height,const int width) {
-            shape_ = std::vector<int >(4);
+        Blob(const int num,const int height,const int width) {
+            shape_ = std::vector<int >(3);
             shape_[0] = num;
-            shape_[1] = channels;
-            shape_[2] = height;
-            shape_[3] = width;
+            shape_[1] = height;
+            shape_[2] = width;
             count_ = 1;
             for(int i = 0;i < shape_.size();i ++) {
                 count_ *= shape_[i];
@@ -35,13 +35,17 @@ class Blob {
                 delete [] diff_;
             }
         }
-        void Reshape(const int num,const int channels,const int height,const int width) {
+        void random() {
+            for(int i = 0;i < count_;i ++) {
+                data_[i] = 1;
+            }
+        }
+        void Reshape(const int num,const int height,const int width) {
             int count = 1;
-            vector<int > shape = std::vector<int >(4);
+            vector<int > shape = std::vector<int >(3);
             shape[0] = num;
-            shape[1] = channels;
-            shape[2] = height;
-            shape[3] = width;
+            shape[1] = height;
+            shape[2] = width;
             for(int i = 0;i < shape.size();i ++) {
                 count *= shape[i];
             }
@@ -49,6 +53,9 @@ class Blob {
                 cerr << INFO << "count "<<count << " != count_ "<<count_<<endl;
                 shape_ = shape;
             }
+        }
+        const std::vector<int > & shape() const {
+            return shape_;
         }
         Dtype* mutable_data() {
             return data_;
@@ -61,6 +68,10 @@ class Blob {
         }
         const Dtype * diff() const  {
             return diff_;
+        }
+        void set_zero() {
+            memset(data_,0,sizeof(data_));
+            memset(diff_,0,sizeof(diff_));
         }
     private:
         Dtype * data_;
