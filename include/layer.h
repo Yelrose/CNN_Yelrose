@@ -3,7 +3,8 @@
 #include "debug.h"
 #include "blob.h"
 #include <iostream>
-#include <vector> using namespace std;
+#include <vector>
+using namespace std;
 
 template <typename Dtype>
 class Layer {
@@ -57,11 +58,11 @@ class Layer {
         void convolution_backward(const vector<Blob<Dtype> *>&bottom,const vector<Blob<Dtype>* > &top,Dtype learningRate) {
             int batch_size = bottom[0] -> shape()[0];
             for(int i = 0;i < bottom.size();i ++) {
-                Dtype * bottom_diff_ = bottom[j] -> mutable_diff();
-                memset(bottom_diff_,0,sizeof(bottom_diff_))
+                Dtype * bottom_diff_ = bottom[i] -> mutable_diff();
+                memset(bottom_diff_,0,sizeof(bottom_diff_));
             }
             for(int i = 0;i < blobs_.size();i ++) {
-                Dtype * blobs_diff_ = blobs[i].mutable_diff();
+                Dtype * blobs_diff_ = blobs_[i].mutable_diff();
                 memset(blobs_diff_,0,sizeof(blobs_diff_));
             }
 
@@ -84,10 +85,10 @@ class Layer {
                     for(int num = 0; num < top_shape[0];num ++) {
                         for(int bh;bh < bottom_shape[1] - conv_height +conv_stride;bh += conv_stride) {
                             for(int bw;bw < bottom_shape[2] - conv_width + conv_stride;bw += conv_stride) {
+                                int th = bh / conv_height;
+                                int tw = bw / conv_width;
                                 for(int h = 0;h < conv_height;h ++) {
                                     for(int w = 0;w < conv_width;w ++) {
-                                        th = bh / conv_height;
-                                        tw = bw / conv_width;
                                         // bottom layer backpropagation
                                         bottom_diff[num*bottom_shift1 + bh*bottom_shift2 + bw] +=
                                             top_diff[num*top_shift1 + th * top_shift2 + tw]*
@@ -144,7 +145,7 @@ class Layer {
                                     if(first ++) top_[num * top_shift1 + th * top_shift2 + tw] = bottom_[num* bottom_shift1 + bh * bottom_shift2 + bw];
                                     top_[num * top_shift1 + th * top_shift2 + tw] = max(
                                             top_[num * top_shift1 + th * top_shift2 + tw] ,
-                                            bottom_[num* bottom_shift1  bh * bottom_shift2 + bw]
+                                            bottom_[num* bottom_shift1 +  bh * bottom_shift2 + bw]
                                     );
                                 }
                             }
