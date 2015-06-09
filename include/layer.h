@@ -3,8 +3,7 @@
 #include "debug.h"
 #include "blob.h"
 #include <iostream>
-#include <vector>
-using namespace std;
+#include <vector> using namespace std;
 
 template <typename Dtype>
 class Layer {
@@ -114,8 +113,83 @@ class Layer {
         }
 
 
+        /*
+         * TODO poolng layer implement
+         */
+        void set_pooling_mode(int height,int width,int stride) {
+            pool_height = height;
+            pool_width = width;
+            pool_stride = stride;
+        }
 
-        void (int height,int width,int stride,int feature_map) {
+        void pooling_forward(const vector<Blob<Dtype> *>&bottom,const vector<Blob<Dtype>* > &top) {
+            if(bottom.size() != top.size()) cerr << INFO <<" bottom size " << bottom.size() << " != top size " <<  top.size() << endl;
+            for(int i = 0;i < bottom.size();i ++) {
+                const Dtype * bottom_ =  bottom[i] -> data();
+                Dtype * top_ =  top[i] -> mutable_data();
+                const vector<int > & bottom_shape =  bottom[i]->shape();
+                const vector<int > & top_shape = top[i] -> shape();
+                int top_shift1 = top_shape[1] * top_shape[2];
+                int top_shift2 = top_shape[2];
+                int bottom_shift1 = bottom_shape[1] * bottom_shape[2];
+                int bottom_shift2 = bottom_shape[2];
+                for(int num = 0;num < top_shape[0];num ++) {
+                    for(int bh = 0;bh < bottom_shape[1] - pool_height;bh += pool_stride) {
+                        for(int bw = 0;bw < bottom_shape[2] - pool_width;bw += pool_stride) {
+                            bool first = false;
+                            int th =  bh / pool_stride;
+                            int tw = bw / pool_stride;
+                            for(int h = 0;h < pool_height;h ++) {
+                                for(int w = 0;w < pool_width;w ++) {
+                                    if(first ++) top_[num * top_shift1 + th * top_shift2 + tw] = bottom_[num* bottom_shift1 + bh * bottom_shift2 + bw];
+                                    top_[num * top_shift1 + th * top_shift2 + tw] = max(
+                                            top_[num * top_shift1 + th * top_shift2 + tw] ,
+                                            bottom_[num* bottom_shift1  bh * bottom_shift2 + bw]
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        void pooling_backward(const vector<Blob<Dtype> *>&bottom,const vector<Blob<Dtype>* > &top) {
+            if(bottom.size() != top.size()) cerr << INFO <<" bottom size " << bottom.size() << " != top size " <<  top.size() << endl;
+            for(int i = 0;i < bottom.size();i ++) {
+                const Dtype * bottom_ =  bottom[i] -> data();
+                const Dtype * top_ =  top[i] -> data();
+                const Dtype * top_diff = top[i] -> diff();
+                Dtype * bottom_diff = bottom[i] -> mutable_diff();
+                const vector<int > & bottom_shape =  bottom[i]->shape();
+                const vector<int > & top_shape = top[i] -> shape();
+                int top_shift1 = top_shape[1] * top_shape[2];
+                int top_shift2 = top_shape[2];
+                int bottom_shift1 = bottom_shape[1] * bottom_shape[2];
+                int bottom_shift2 = bottom_shape[2];
+                for(int num = 0;num < top_shape[0];num ++) {
+                    for(int bh = 0;bh < bottom_shape[1] - pool_height;bh += pool_stride) {
+                        for(int bw = 0;bw < bottom_shape[2] - pool_width;bw += pool_stride) {
+                            bool first = false;
+                            int th =  bh / pool_stride;
+                            int tw = bw / pool_stride;
+                            for(int h = 0;h < pool_height;h ++) {
+                                for(int w = 0;w < pool_width;w ++) {
+                                    if(top_[num * top_shift1 + th * top_shift2 + tw] ==bottom_[num* bottom_shift1  + bh * bottom_shift2 + bw]) {
+                                        bottom_diff[num*bottom_shift1 + bh * bottom_shift2 + bw] = top_diff[num*top_shift1 + th* top_shift2 + tw];
+                                    }
+                                    else {
+                                        bottom_diff[num*bottom_shift1 + bh * bottom_shift2 + bw]  = 0;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
 
 
 
@@ -127,6 +201,9 @@ class Layer {
         int conv_width;
         int conv_stride;
         int conv_feature;
+        int pool_height;
+        int pool_width;
+        int pool_stride;
 };
 
 
