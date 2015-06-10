@@ -4,6 +4,7 @@
 #include "blob.h"
 #include <iostream>
 #include <vector>
+#include <cmath>
 using namespace std;
 
 template <typename Dtype>
@@ -275,6 +276,87 @@ class Layer {
             }
 
         }
+
+
+        void set_softmax_mode() {
+
+            return 0;
+        }
+        Dtype sigmoid(Dtype x) {
+            return 1. / (1 + exp(-x));
+        }
+
+        void sigmoid_forward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*> top) {
+            if(bottom.size() != top.size()) {
+                cerr << INFO << " sigmoid layer bottom size "<<bottom.size() << " != top size "  << top.size() << endl;
+            }
+            for(int i = 0;i < bottom.size();i ++) {
+                if(bottom[i] -> shape() != top[i] -> shape()) {
+                    cerr<<INFO << " bottom shape " << bottom[i]->shape()[0] << "x" << bottom[i] -> shape()[1] << "x" << bottom[i] -> shape()[2]  <<
+                        " not equal " << "top shape " << top[i] -> shape()[0] << "x" << top[i] -> shape()[1] << "x" << top[i] -> shape()[2] << endl;
+                }
+                const Dtype * bottom_ = bottom[i] -> data();
+                Dtype * top_ = top[i] -> mutable_data();
+                for(int j = 0;j < bottom[i] -> size();j ++) {
+                    top_[j] =  sigmoid(bottom_[j]);
+                }
+            }
+        }
+
+
+        void sigmoid_backward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*>top) {
+            for(int i = 0;i < bottom.size();i ++) {
+                const Dtype * bottom_ = bottom[i] -> data();
+                const Dtype * top_diff = top[i] -> diff();
+                const Dtype * top_ = top[i] -> data();
+                Dtype * bottom_diff = bottom -> mutable_diff();
+                for(int j = 0;j < top[i] -> size();j ++) {
+                    const Dtype sigmoid_x = top_[j];
+                    bottom_diff[j] = top_diff[j] * top_[j] * (1 - top_[j]);
+                }
+            }
+        }
+
+
+
+        void set_ReLU_mode() {
+
+        }
+
+
+        void ReLU_forward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*> top) {
+            if(bottom.size() != top.size()) {
+                cerr << INFO << " ReLU layer bottom size "<<bottom.size() << " != top size "  << top.size() << endl;
+            }
+            for(int i = 0;i < bottom.size();i ++) {
+                if(bottom[i] -> shape() != top[i] -> shape()) {
+                    cerr<<INFO << " bottom shape " << bottom[i]->shape()[0] << "x" << bottom[i] -> shape()[1] << "x" << bottom[i] -> shape()[2]  <<
+                        " not equal " << "top shape " << top[i] -> shape()[0] << "x" << top[i] -> shape()[1] << "x" << top[i] -> shape()[2] << endl;
+                }
+                const Dtype * bottom_ = bottom[i] -> data();
+                Dtype * top_ = top[i] -> mutable_data();
+                for(int j = 0;j < bottom[i] -> size();j ++) {
+                    top_[j] =  max(bottom_[j],(Dtype)0.0);
+                }
+            }
+        }
+
+
+        void ReLU_backward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*>top) {
+            for(int i = 0;i < bottom.size();i ++) {
+                const Dtype * bottom_ = bottom[i] -> data();
+                const Dtype * top_diff = top[i] -> diff();
+                const Dtype * top_ = top[i] -> data();
+                Dtype * bottom_diff = bottom -> mutable_diff();
+                for(int j = 0;j < top[i] -> size();j ++) {
+                    bottom_diff[j] = top_diff[j] *( (bottom_[j] > 0)?1.0:0.0);
+                }
+            }
+        }
+
+
+
+
 
     private:
         vector<Blob<Dtype >* > blobs_;
