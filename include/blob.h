@@ -12,6 +12,30 @@ class Blob {
         Blob():data_(),diff_(),count_(0){
 
         }
+        Blob<Dtype> * Share_Reshape_Blob(const int num,const int height,const int width ) {
+            Blob<Dtype> * p =  new Blob(num,height,width,data_,diff_);
+            return p;
+        }
+        Blob(const int num,const int height,const int width,Dtype * data,Dtype * diff) {
+            shape_ = std::vector<int >(3);
+            shape_[0] = num;
+            shape_[1] = height;
+            shape_[2] = width;
+            count_ = 1;
+            for(int i = 0;i < shape_.size();i ++) {
+                count_ *= shape_[i];
+            }
+            if(count_ > 0) {
+                data_ = data;
+                diff_ = diff;
+            }
+            else {
+                cerr << INFO << " count_ == 0" << endl;
+            }
+        }
+
+
+
         Blob(const int num,const int height,const int width) {
             shape_ = std::vector<int >(3);
             shape_[0] = num;

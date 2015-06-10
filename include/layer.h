@@ -202,9 +202,79 @@ class Layer {
 
 
 
+        void set_fully_mode(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*> top) {
+            int height = 0;
+            for (int i = 0;i < bottom.size();i ++) {
+                height += bottom[i] -> shape()[2];
+            }
+            int width =  top[0] -> shape()[2];
+            Blob<Dtype> * p  = new Blob<Dtype>(1,height,width);
+            p -> random();
+            blobs_.clear();
+            blobs_.push_back(p);
+        }
 
+        void fully_forward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*> top) {
+            top[0] -> set_zero();
+            int tot_num =  top[0]-> shape()[0];
+            int tot_width = top[0] -> shape()[2];
+            Dtype * top_ = top[0] -> mutable_data();
+            const Dtype * weight_ =  blobs_[0] -> data();
+            int tot_height = 0;
+            for(int i = 0;i < bottom.size();i ++) {
+                int height = bottom[i] -> shape()[2];
+                tot_height += height;
+                const Dtype * bottom_ =  bottom[i] -> data();
+                for (int num = 0;num < tot_num;num ++) {
+                    for (int h = 0;h < height;h ++) {
+                        for (int w = 0;w < tot_width;w ++) {
+                            top_[num * tot_width + w] += bottom_[num * height + h] * weight_[(tot_height + h) * tot_width + w];
+                        }
+                    }
+                }
+            }
+        }
 
+        void fully_backward(const vector<Blob<Dtype>* > bottom,const vector<Blob<Dtype>*> top,Dtype learningRate) {
+            for(int i = 0;i < bottom.size();i ++) {
+                Dtype * p = bottom[i] -> mutable_data();
+                memset(p,0,sizeof(p));
+            }
+            for(int i = 0;i < blobs_.size();i ++) {
+                Dtype * p = blobs_[i] -> mutable_data();
+                memset(p,0,sizeof(p));
+            }
 
+            // back propagation
+            int tot_num =  top[0]-> shape()[0];
+            int tot_width = top[0] -> shape()[2];
+            const Dtype * top_diff = top[0] -> diff();
+            const Dtype * weight_ =  blobs_[0] -> data();
+            Dtype * weight_diff =blobs_[0] -> mutable_diff();
+            int tot_height = 0;
+            for(int i = 0;i < bottom.size();i ++) {
+                int height = bottom[i] -> shape()[2];
+                tot_height += height;
+                const Dtype * bottom_ =  bottom[i] -> data();
+                Dtype * bottom_diff = bottom[i] -> mutable_diff();
+                for (int num = 0;num < tot_num;num ++) {
+                    for (int h = 0;h < height;h ++) {
+                        for (int w = 0;w < tot_width;w ++) {
+                            //top_[num * tot_width + w] += bottom_[num * height + h] * weight_[(tot_height + h) * tot_width + w];
+                            bottom_diff[num*height+h] += top_diff[num*tot_width+w] *weight_[(tot_height + h) * tot_width+w];
+                            weight_diff[(tot_height+h) * tot_width+1]  += top_diff[num* tot_width + w] * bottom_[num *height +h];
+                        }
+                    }
+                }
+            }
+
+            Dtype * new_weight = blobs_[0] -> mutable_data();
+            // Update weight
+            for(int i = 0;i < tot_width * tot_height;i ++) {
+                new_weight[i] = new_weight[i] - learningRate / tot_num * weight_diff[i];
+            }
+
+        }
 
     private:
         vector<Blob<Dtype >* > blobs_;
