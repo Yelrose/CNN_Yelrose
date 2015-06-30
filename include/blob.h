@@ -54,9 +54,10 @@ class Blob {
             }
         }
         ~Blob() {
-            if(count_ > 0) {
-                delete [] data_;
-                delete [] diff_; }
+            //if(count_ > 0) {
+                //delete [] data_;
+                //delete [] diff_;
+            //}
         }
         void random() {
             for(int i = 0;i < count_;i ++) {

@@ -70,7 +70,7 @@ class Layer {
                 memset(bottom_diff_,0,sizeof(bottom_diff_));
             }
             for(int i = 0;i < blobs_.size();i ++) {
-                Dtype * blobs_diff_ = blobs_[i].mutable_diff();
+                Dtype * blobs_diff_ = blobs_[i] -> mutable_diff();
                 memset(blobs_diff_,0,sizeof(blobs_diff_));
             }
 
@@ -81,7 +81,7 @@ class Layer {
                     const Dtype * bottom_ = bottom[j] -> data();
                     const Dtype* top_ = top[i] -> data();
                     Dtype * bottom_diff = bottom[j] -> mutable_diff();
-                    Dtype * top_diff = top[i] -> diff();
+                    const Dtype * top_diff = top[i] -> diff();
                     // backpropagation
                     // bottom_diff = s
                     const vector<int > & top_shape = top[i] -> shape();
@@ -278,7 +278,7 @@ class Layer {
         }
 
 
-        void set_softmax_mode() {
+        void set_sigmoid_mode() {
 
             return 0;
         }
@@ -347,7 +347,7 @@ class Layer {
                 const Dtype * bottom_ = bottom[i] -> data();
                 const Dtype * top_diff = top[i] -> diff();
                 const Dtype * top_ = top[i] -> data();
-                Dtype * bottom_diff = bottom -> mutable_diff();
+                Dtype * bottom_diff = bottom[i] -> mutable_diff();
                 for(int j = 0;j < top[i] -> size();j ++) {
                     bottom_diff[j] = top_diff[j] *( (bottom_[j] > 0)?1.0:0.0);
                 }
@@ -355,7 +355,35 @@ class Layer {
         }
 
 
+        void set_softmax_with_cross_entropy_mode() {
 
+
+        }
+
+
+        Dtype softmax_with_cross_entropy(const vector<Blob<Dtype> *> bottom,const vector<Blob<Dtype> *> label) {
+            if(bottom.size() != label.size()) {
+                cerr << INFO << " softmax_with_cross_entropy bottom size "<<bottom.size() << " != label size "  << label.size() << endl;
+            }
+            const Dtype * bottom_ = bottom[0] -> data();
+            const Dtype * label_ = label[0] -> data();
+            Dtype * bottom_diff_ = bottom[0] -> mutable_diff();
+            const vector<int > shape = bottom[0] -> shape();
+            int w_h = shape[1] * shape[2];
+            Dtype loss = 0;
+            for(int num = 0;num < shape[0];num ++) {
+                Dtype sum = 0;
+                for(int i = 0;i < w_h;i ++) {
+                    sum += exp(bottom_[i + num * w_h]);
+                }
+                for(int i = 0;i < bottom[0] -> size();i ++) {
+                    Dtype y = exp(bottom_[i + num*w_h]);
+                    bottom_diff_[i + num*w_h] = y - label_[i];
+                    loss += -log(y) * label_[i];
+                }
+            }
+            return loss;
+        }
 
 
     private:

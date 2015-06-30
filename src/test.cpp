@@ -31,6 +31,7 @@ int main() {
     vector<Blob<double > * > output_blobs;
     vector<Blob<double > * > output_blobs_sigmoid;
     vector<Blob<double > * > output_blobs_relu;
+    vector<Blob<double > * > label;
 
     cerr << INFO << " data_blobs init" << endl;
 
@@ -77,6 +78,14 @@ int main() {
     Blob<double > * p2 = new Blob<double > (2,1,10);
     output_blobs_relu.push_back(p2);
 
+    Blob<double > * l = new Blob<double > (2,1,10);
+    double * data = l -> mutable_data();
+    for(int i = 0;i < 20;i ++) {
+        data[i] = 0;
+    }
+    data[10 + 3] = 1;
+    data[4] = 1;
+    label.push_back(l);
 
 
     Layer<double> conv1 = Layer<double > ();
@@ -84,11 +93,13 @@ int main() {
     Layer<double> fully = Layer<double > ();
     Layer<double> sigmoid = Layer<double > ();
     Layer<double> relu = Layer<double > ();
+    Layer<double > loss = Layer<double > ();
 
 
     conv1.set_convolution_mode(2,2,1,2);
     pool1.set_pooling_mode(2,2,2);
     fully.set_fully_mode(pool1_output_reshape,output_blobs);
+    loss.set_softmax_with_cross_entropy_mode();
 
 
     conv1.convolution_forward(data_blobs,conv1_output);
@@ -96,6 +107,14 @@ int main() {
     fully.fully_forward(pool1_output_reshape,output_blobs);
     sigmoid.sigmoid_forward(output_blobs,output_blobs_sigmoid);
     relu.ReLU_forward(output_blobs,output_blobs_relu);
+    loss.softmax_with_cross_entropy(output_blobs_relu,label);
+    relu.ReLU_backward(output_blobs,output_blobs_relu);
+    fully.fully_backward(pool1_output_reshape,output_blobs,0.01);
+    pool1.pooling_backward(conv1_output,pool1_output);
+    conv1.convolution_backward(data_blobs,conv1_output,0.01);
+
+
+
 
 
     cerr <<INFO << " data_blobs" << endl;
