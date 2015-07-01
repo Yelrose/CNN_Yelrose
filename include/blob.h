@@ -10,13 +10,14 @@ template <typename Dtype>
 class Blob {
     public:
         Blob():data_(),diff_(),count_(0){
-
+            copy = false;
         }
         Blob<Dtype> * Share_Reshape_Blob(const int num,const int height,const int width ) {
             Blob<Dtype> * p =  new Blob(num,height,width,data_,diff_);
             return p;
         }
         Blob(const int num,const int height,const int width,Dtype * data,Dtype * diff) {
+            copy = true;
             shape_ = std::vector<int >(3);
             shape_[0] = num;
             shape_[1] = height;
@@ -37,6 +38,7 @@ class Blob {
 
 
         Blob(const int num,const int height,const int width) {
+            copy = false;
             shape_ = std::vector<int >(3);
             shape_[0] = num;
             shape_[1] = height;
@@ -54,10 +56,12 @@ class Blob {
             }
         }
         ~Blob() {
-            //if(count_ > 0) {
-                //delete [] data_;
-                //delete [] diff_;
-            //}
+            if(count_ > 0 && !copy) {
+                delete [] data_;
+                delete [] diff_;
+                data_ = 0;
+                diff_ = 0;
+            }
         }
         void random() {
             for(int i = 0;i < count_;i ++) {
@@ -105,6 +109,7 @@ class Blob {
         Dtype * diff_;
         std::vector<int > shape_;
         int count_;
+        bool copy;
 };
 
 #endif

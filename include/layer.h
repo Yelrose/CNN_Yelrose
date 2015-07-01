@@ -12,6 +12,11 @@ class Layer {
     public:
         Layer(){
         }
+        ~Layer() {
+            for (int i = 0;i < blobs_.size();i ++) {
+                delete blobs_[i];
+            }
+        }
         void set_convolution_mode(int height,int width,int stride,int feature_map) {
             conv_height = height;
             conv_width = width;
@@ -224,7 +229,6 @@ class Layer {
             int tot_height = 0;
             for(int i = 0;i < bottom.size();i ++) {
                 int height = bottom[i] -> shape()[2];
-                tot_height += height;
                 const Dtype * bottom_ =  bottom[i] -> data();
                 for (int num = 0;num < tot_num;num ++) {
                     for (int h = 0;h < height;h ++) {
@@ -233,6 +237,7 @@ class Layer {
                         }
                     }
                 }
+                tot_height += height;
             }
         }
 
@@ -255,7 +260,6 @@ class Layer {
             int tot_height = 0;
             for(int i = 0;i < bottom.size();i ++) {
                 int height = bottom[i] -> shape()[2];
-                tot_height += height;
                 const Dtype * bottom_ =  bottom[i] -> data();
                 Dtype * bottom_diff = bottom[i] -> mutable_diff();
                 for (int num = 0;num < tot_num;num ++) {
@@ -263,10 +267,11 @@ class Layer {
                         for (int w = 0;w < tot_width;w ++) {
                             //top_[num * tot_width + w] += bottom_[num * height + h] * weight_[(tot_height + h) * tot_width + w];
                             bottom_diff[num*height+h] += top_diff[num*tot_width+w] *weight_[(tot_height + h) * tot_width+w];
-                            weight_diff[(tot_height+h) * tot_width+1]  += top_diff[num* tot_width + w] * bottom_[num *height +h];
+                            weight_diff[(tot_height+h) * tot_width+w]  += top_diff[num* tot_width + w] * bottom_[num *height +h];
                         }
                     }
                 }
+                tot_height += height;
             }
 
             Dtype * new_weight = blobs_[0] -> mutable_data();
@@ -309,7 +314,7 @@ class Layer {
                 const Dtype * bottom_ = bottom[i] -> data();
                 const Dtype * top_diff = top[i] -> diff();
                 const Dtype * top_ = top[i] -> data();
-                Dtype * bottom_diff = bottom -> mutable_diff();
+                Dtype * bottom_diff = bottom[i] -> mutable_diff();
                 for(int j = 0;j < top[i] -> size();j ++) {
                     const Dtype sigmoid_x = top_[j];
                     bottom_diff[j] = top_diff[j] * top_[j] * (1 - top_[j]);
@@ -376,9 +381,9 @@ class Layer {
                 for(int i = 0;i < w_h;i ++) {
                     sum += exp(bottom_[i + num * w_h]);
                 }
-                for(int i = 0;i < bottom[0] -> size();i ++) {
+                for(int i = 0;i < w_h;i ++) {
                     Dtype y = exp(bottom_[i + num*w_h]);
-                    bottom_diff_[i + num*w_h] = y - label_[i];
+                    bottom_diff_[i + num*w_h] = y - label_[i+num*w_h];
                     loss += -log(y) * label_[i];
                 }
             }

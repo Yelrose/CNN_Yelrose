@@ -9,6 +9,7 @@ template <typename Dtype>
 void print(const Blob<Dtype > *tmp) {//const double * p, const vector<int > & shape) {
     const Dtype * p = tmp -> data();
     const vector<int > & shape = tmp -> shape();
+    cout << shape.size() << endl;
     int shift1 = shape[1] * shape[2];
     int shift2 = shape[2];
     for(int num = 0;num < shape[0];num ++) {
@@ -101,17 +102,32 @@ int main() {
     fully.set_fully_mode(pool1_output_reshape,output_blobs);
     loss.set_softmax_with_cross_entropy_mode();
 
-
+    cout << INFO << " Operation begin" << endl;
+    cout <<"Convolution" << endl;
     conv1.convolution_forward(data_blobs,conv1_output);
+    cout <<"Pooling " << endl;
     pool1.pooling_forward(conv1_output,pool1_output);
+
+    cout <<"Fully" << endl;
     fully.fully_forward(pool1_output_reshape,output_blobs);
+
+    cout <<"Sigmoid " << endl;
     sigmoid.sigmoid_forward(output_blobs,output_blobs_sigmoid);
+    cout << "ReLU " <<endl;
     relu.ReLU_forward(output_blobs,output_blobs_relu);
-    loss.softmax_with_cross_entropy(output_blobs_relu,label);
-    relu.ReLU_backward(output_blobs,output_blobs_relu);
+    cout <<"entropy" << endl;
+    loss.softmax_with_cross_entropy(output_blobs_sigmoid,label);
+    cout <<"relu backward" << endl;
+    relu.sigmoid_backward(output_blobs,output_blobs_sigmoid);
+
+    cout <<"fully backward" << endl;
     fully.fully_backward(pool1_output_reshape,output_blobs,0.01);
-    pool1.pooling_backward(conv1_output,pool1_output);
-    conv1.convolution_backward(data_blobs,conv1_output,0.01);
+    //cout <<"pooling backward" << endl;
+    //pool1.pooling_backward(conv1_output,pool1_output);
+
+    //cout <<"conv backward" << endl;
+    //conv1.convolution_backward(data_blobs,conv1_output,0.01);
+
 
 
 
@@ -153,10 +169,44 @@ int main() {
 
     cerr <<INFO << " output_blobs_relu" << endl;
     for(int i = 0;i < output_blobs_relu.size();i ++) {
+        cout << output_blobs_relu[i] -> shape().size() <<endl;
         print<double >(output_blobs_relu[i]);
     }
 
 
+
+    //vector<Blob<double > * > data_blobs;
+    //vector<Blob<double > * > conv1_output;
+    //vector<Blob<double > * > pool1_output;
+    //vector<Blob<double > * > pool1_output_reshape;
+    //vector<Blob<double > * > output_blobs;
+    //vector<Blob<double > * > output_blobs_sigmoid;
+    //vector<Blob<double > * > output_blobs_relu;
+    //vector<Blob<double > * > label;
+    for(int i = 0;i < data_blobs.size() ;i ++) {
+        delete data_blobs[i];
+    }
+    for(int i = 0 ;i < conv1_output.size();i ++) {
+        delete conv1_output[i];
+    }
+    for(int i = 0;i < pool1_output.size();i ++) {
+        delete pool1_output[i];
+    }
+    for(int i = 0;i < pool1_output_reshape.size();i ++) {
+        delete pool1_output_reshape[i];
+    }
+    for(int i = 0;i < output_blobs.size();i ++) {
+        delete output_blobs[i];
+    }
+    for(int i = 0;i < output_blobs_sigmoid.size();i ++) {
+        delete output_blobs_sigmoid[i];
+    }
+    for(int i = 0;i < output_blobs_relu.size();i ++) {
+        delete output_blobs_relu[i];
+    }
+    for(int i = 0;i < label.size();i ++) {
+        delete label[i];
+    }
 
 
 
