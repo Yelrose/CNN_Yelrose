@@ -122,11 +122,11 @@ int main() {
 
     cout <<"fully backward" << endl;
     fully.fully_backward(pool1_output_reshape,output_blobs,0.01);
-    //cout <<"pooling backward" << endl;
-    //pool1.pooling_backward(conv1_output,pool1_output);
+    cout <<"pooling backward" << endl;
+    pool1.pooling_backward(conv1_output,pool1_output);
 
-    //cout <<"conv backward" << endl;
-    //conv1.convolution_backward(data_blobs,conv1_output,0.01);
+    cout <<"conv backward" << endl;
+    conv1.convolution_backward(data_blobs,conv1_output,0.01);
 
 
 
